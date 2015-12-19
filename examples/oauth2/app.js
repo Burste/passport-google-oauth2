@@ -1,12 +1,17 @@
 var express = require('express')
   , passport = require('passport')
   , util = require('util')
-  , GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+  , GoogleStrategy = require('passport-google-oauth').OAuth2Strategy
+  , logger = require('morgan')
+  , session = require('express-session')
+  , bodyParser = require("body-parser")
+  , cookieParser = require("cookie-parser")
+  , methodOverride = require('method-override');
 
 // API Access link for creating client ID and secret:
 // https://code.google.com/apis/console/
-var GOOGLE_CLIENT_ID = "--insert-google-client-id-here--";
-var GOOGLE_CLIENT_SECRET = "--insert-google-client-secret-here--";
+var GOOGLE_CLIENT_ID = "986965358681-asn36970vc4tjkld3kg134ks3ojccuqj.apps.googleusercontent.com";
+var GOOGLE_CLIENT_SECRET = "XZSqo9IyZjxelwvEVR9b-GOj";
 
 
 // Passport session setup.
@@ -32,7 +37,7 @@ passport.deserializeUser(function(obj, done) {
 passport.use(new GoogleStrategy({
     clientID: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
-    callbackURL: "http://127.0.0.1:3000/auth/google/callback"
+    callbackURL: "http://burste.koding.io:3000/auth/google/callback"
   },
   function(accessToken, refreshToken, profile, done) {
     // asynchronous verification, for effect...
@@ -50,24 +55,22 @@ passport.use(new GoogleStrategy({
 
 
 
-var app = express.createServer();
+var app = express();
 
 // configure Express
-app.configure(function() {
-  app.set('views', __dirname + '/views');
+
+   app.set('views', __dirname + '/views');
   app.set('view engine', 'ejs');
-  app.use(express.logger());
-  app.use(express.cookieParser());
-  app.use(express.bodyParser());
-  app.use(express.methodOverride());
-  app.use(express.session({ secret: 'keyboard cat' }));
+  app.use(logger());
+  app.use(cookieParser());
+  app.use(bodyParser());
+  app.use(methodOverride());
+  app.use(session({ secret: 'keyboard cat' }));
   // Initialize Passport!  Also use passport.session() middleware, to support
   // persistent login sessions (recommended).
   app.use(passport.initialize());
   app.use(passport.session());
-  app.use(app.router);
   app.use(express.static(__dirname + '/public'));
-});
 
 
 app.get('/', function(req, res){
@@ -88,7 +91,7 @@ app.get('/login', function(req, res){
 //   redirecting the user to google.com.  After authorization, Google
 //   will redirect the user back to this application at /auth/google/callback
 app.get('/auth/google',
-  passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.login'] }),
+  passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/userinfo.profile','https://www.googleapis.com/auth/plus.login', 'https://www.googleapis.com/auth/userinfo.email'] }),
   function(req, res){
     // The request will be redirected to Google for authentication, so this
     // function will not be called.
